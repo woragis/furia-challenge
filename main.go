@@ -1,29 +1,40 @@
 package main
 
 import (
-	"app-backend/data/database"
-	"app-backend/data/redis"
-	"app-backend/domain/user"
-	"app-backend/handler"
-	"app-backend/routes"
+	"fmt"
+	"log"
+	"strings"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/antchfx/htmlquery"
+	"github.com/gocolly/colly"
 )
 
 func main() {
-	app:=fiber.New()
 
-	// Initialize Data clients
-	dbConn := database.InitPostgres()
-	redis.InitRedis("localhost:6379")
+	c := colly.NewCollector()
+	url := "https://x.com/furia"
 
-	// Construct User Domain
-	userRepo    := user.NewRepository(dbConn)
-	userService := user.NewService(userRepo)
-	userHandler := &handler.UserHandler{Service: userService}
 
-	// Register Routes
-	routes.RegisterUserRoutes(app, userHandler)
+	c.OnResponse(func(r *colly.Response) {
+		doc, err := htmlquery.Parse(strings.NewReader(string(r.Body)))
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	app.Listen(":8000")
+		// XPath to find the followers link
+		node := htmlquery.FindOne(doc, "//a[contains(@href, '/verified_followers')]")
+		if node == nil {
+			fmt.Println("No followers link found.")
+			return
+		}
+
+		href := htmlquery.SelectAttr(node, "href")
+		text := htmlquery.InnerText(node)
+
+		fmt.Printf("Text: %s\nLink: %s\n", text, href)
+	})
+	
+
+
+	c.Visit(url)
 }
