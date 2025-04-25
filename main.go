@@ -1,40 +1,28 @@
 package main
 
 import (
+	"app/utils/scraper"
 	"fmt"
 	"log"
-	"strings"
-
-	"github.com/antchfx/htmlquery"
-	"github.com/gocolly/colly"
 )
 
 func main() {
+	// Initialize the headless browser once
+	scraper.InitializeHeadlessChrome()
+	defer scraper.CloseHeadlessChrome() // Ensure we close it when the program ends
 
-	c := colly.NewCollector()
-	url := "https://x.com/furia"
+	// Example usage: Get verified followers link
+	profileURL := "https://twitter.com/FURIA"
+	link, err := scraper.GetVerifiedFollowersLink(profileURL)
+	if err != nil {
+		log.Fatal("Error fetching followers link:", err)
+	}
+	fmt.Println("Verified followers link:", link)
 
-
-	c.OnResponse(func(r *colly.Response) {
-		doc, err := htmlquery.Parse(strings.NewReader(string(r.Body)))
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// XPath to find the followers link
-		node := htmlquery.FindOne(doc, "//a[contains(@href, '/verified_followers')]")
-		if node == nil {
-			fmt.Println("No followers link found.")
-			return
-		}
-
-		href := htmlquery.SelectAttr(node, "href")
-		text := htmlquery.InnerText(node)
-
-		fmt.Printf("Text: %s\nLink: %s\n", text, href)
-	})
-	
-
-
-	c.Visit(url)
+	// Example usage: Fetch another profile info (e.g., tweet count)
+	tweetCount, err := scraper.FetchAnotherInfoForProfile(profileURL)
+	if err != nil {
+		log.Fatal("Error fetching tweet count:", err)
+	}
+	fmt.Println("Number of tweets:", tweetCount)
 }
