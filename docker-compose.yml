@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:16.6
+    container_name: meututor-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: meututor
+    ports:
+      - '5432:5432'
+    volumes:
+      - meututor_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres', '-d', 'meututor']
+      interval: 10s
+      retries: 5
+      start_period: 5s
+      timeout: 5s
+    networks:
+      - meututor-network
+
+  cache:
+    image: redis:7.2.5
+    container_name: meututor-cache
+    ports:
+      - '6379:6379'
+    volumes:
+      - meututor_cache:/cache
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      retries: 5
+      start_period: 5s
+      timeout: 5s
+    networks:
+      - meututor-network
+
+  meututor:
+    container_name: meututor-backend
+    restart: on-failure:3
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8000:8000'
+    depends_on:
+      - db
+      - cache
+    environment:
+      - DATABASE_URL=postgres://postgres:password@db:5432/meututor?sslmode=disable
+      - REDIS_URL=redis://cache:6379
+    networks:
+      - meututor-network
+
+networks:
+  meututor-network:
+    name: meututor-network
+    driver: bridge
+
+volumes:
+  meututor_cache:
+    name: meututor-cache
+  meututor_data:
+    name: meututor-data
