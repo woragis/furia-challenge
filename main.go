@@ -17,12 +17,13 @@ func main() {
 	if err != nil {
 		log.Fatal("Error fetching followers link:", err)
 	}
+	fmt.Println(fmt.Sprintf("link: https://twitter.com%s", link))
 	fmt.Println("Verified followers link:", link)
 
 	// Example usage: Fetch another profile info (e.g., tweet count)
-	tweetCount, err := scraper.FetchAnotherInfoForProfile(profileURL)
-	if err != nil {
-		log.Fatal("Error fetching tweet count:", err)
-	}
-	fmt.Println("Number of tweets:", tweetCount)
+	// tweetCount, err := scraper.FetchAnotherInfoForProfile(profileURL)
+	// if err != nil {
+	// 	log.Fatal("Error fetching tweet count:", err)
+	// }
+	// fmt.Println("Number of tweets:", tweetCount)
 }
